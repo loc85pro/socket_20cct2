@@ -1,1 +1,94 @@
+import socket
+import json
 
+HOST = "127.0.0.1"
+SEVER_PORT = 65432
+FORMAT = "utf8"
+
+#------------------------------------------
+def createConnectSever(host, port):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    n=0
+    while 1:
+        try:
+            s.connect((host,port))
+            break
+        except:
+            print("Try connecting sever again!")
+        n=n+1
+        if n>5:
+            print("Can't connect to sever, turn on sever pls")
+            print("Enter to continue")
+            input()
+            n=0
+    return s
+#-----------------------------------------
+
+def login(s:socket):
+    print("---------LOGIN--------")
+    try:
+        while 1:
+            print("Username: ")
+            userName = input()
+            print("Pass: ")
+            password = input()
+            try:
+                s.send(userName.encode(FORMAT))
+                s.send(password.encode(FORMAT))
+                temp = s.recv(1024).decode(FORMAT)
+            except:
+                print("Error")
+                return 0
+            if temp=="1":
+                print("Login successfully! Welcom ",userName)
+                break
+            else:
+                print("Username or password is incorrect!")
+    except:
+        return 0
+    return 1
+#----------------------------------------------------
+
+def register(s:socket):
+    print("---------Register-------")
+    try:
+        while 1:
+            print("user:")
+            userName = input()
+            print("pass:")
+            password = input()
+            s.sendall(userName.encode(FORMAT))
+            s.sendall(password.encode(FORMAT))
+            status = s.recv(1024).decode(FORMAT)
+            if status =="1":
+                print("Singup successfully")
+                break
+            print("This user is available")
+    except:
+        return 0
+    return 1
+
+#------- MAIN---------------
+def main():
+    s = createConnectSever(HOST, SEVER_PORT)
+    print("1. Sign up\n2. Sign in")
+    k = input()
+    if k=="1":
+        s.send("regis".encode(FORMAT))
+        if register(s)==0:
+            return 0
+    s.send("login".encode(FORMAT))
+    if login(s)==0:
+        return 0
+    data = s.recv(2048).decode(FORMAT)
+    with open('data_user.js', 'w') as outfile:
+        outfile.write(data)
+    with open('data_user.js') as json_file:
+          data_json = json.load(json_file)
+    print(data_json)
+    input()
+    return 1
+#-------------------------
+main()
+print("Error")
+input()
